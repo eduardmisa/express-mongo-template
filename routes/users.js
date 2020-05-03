@@ -33,4 +33,20 @@ router.delete('/:slug',
   res.send(result)
 })
 
+router.post('/addACID',
+ async function(req, res, next) {
+
+  await context.users.transaction(async function(session) {
+      let collection = await context.users.raw()
+      let result = await collection.insertOne({ firstName: "", lastName: ""}, {session})
+  })
+  .then(result => {
+    res.send()
+  })
+  .catch(error => {
+    res.status(400)
+    res.send(error)
+  })
+})
+
 module.exports = router;
