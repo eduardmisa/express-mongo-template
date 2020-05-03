@@ -193,12 +193,24 @@ class CollectionContext {
         })
     }
 
-    raw(callback) {
-        MongoClient.connect(dbConnection, (err, client) => {
-          if (err) throw console.log(err)
-          db = client.db(dbName)
+    raw() {
+        const context = this
+        return new Promise(async function(resolve, reject) {
+            try {
+                let client = await MongoClient.connect(dbConnection)
 
-          callback(db.collection(this.tblName))
+                if (client) {
+
+                    db = client.db(dbName)
+
+                    resolve(db.collection(context.tblName))
+                }
+                else {
+                    reject("Failed to connect to server")    
+                }
+            } catch (error) {
+                reject(error)
+            }
         })
     }
 }
