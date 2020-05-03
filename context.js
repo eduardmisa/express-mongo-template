@@ -15,7 +15,7 @@ class CollectionContext {
         const context = this
         return new Promise(async function(resolve, reject) {
             try {
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
@@ -49,14 +49,14 @@ class CollectionContext {
         
                 pageNumber = pageNumber > 0 ? pageNumber - 1 : pageNumber;
         
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
                     db = client.db(dbName)
-        
-                    let total = await db.collection(context.tblName).count()
-                
+
+                    let total = await db.collection(context.tblName).estimatedDocumentCount()
+
                     let result = await db.collection(context.tblName)
                                          .find()
                                          .skip(pageSize * pageNumber)
@@ -87,7 +87,7 @@ class CollectionContext {
             try {
                 recordId = ObjectId(recordId)
 
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
@@ -111,7 +111,7 @@ class CollectionContext {
         const context = this
         return new Promise(async function(resolve, reject) {
             try {
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
@@ -141,7 +141,7 @@ class CollectionContext {
 
                 recordId = ObjectId(recordId)
 
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
@@ -171,7 +171,7 @@ class CollectionContext {
             try {
                 recordId = ObjectId(recordId)
 
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
@@ -197,13 +197,44 @@ class CollectionContext {
         const context = this
         return new Promise(async function(resolve, reject) {
             try {
-                let client = await MongoClient.connect(dbConnection)
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
 
                 if (client) {
 
                     db = client.db(dbName)
 
                     resolve(db.collection(context.tblName))
+                }
+                else {
+                    reject("Failed to connect to server")    
+                }
+            } catch (error) {
+                reject(error)
+            }
+        })
+    }
+
+    transaction(callback) {
+        const context = this
+        return new Promise(async function(resolve, reject) {
+            try {
+                let client = await MongoClient.connect(dbConnection, { useUnifiedTopology: true })
+
+                if (client) {
+                    let session = client.startSession()
+
+                    const transactionResults = await session.withTransaction(async () => {
+                        try {
+                            await callback(session)
+                        } catch (error) {
+                            await session.abortTransaction();
+                        }
+                      })
+
+                    if (transactionResults)
+                        resolve("Transaction complete")
+                    else
+                        reject("Transaction failed")
                 }
                 else {
                     reject("Failed to connect to server")    
