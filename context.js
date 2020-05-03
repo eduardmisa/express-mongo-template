@@ -44,7 +44,7 @@ class CollectionContext {
                 pageSize = Number(pageSize)
         
                 if (isNaN(pageNumber) || isNaN(pageSize)) {
-                    callback('Invalid parameters')
+                    reject('Invalid parameters')
                 }
         
                 pageNumber = pageNumber > 0 ? pageNumber - 1 : pageNumber;
